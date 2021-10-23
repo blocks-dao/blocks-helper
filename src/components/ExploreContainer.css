@@ -3,21 +3,85 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 300px;
+  margin-top: 50px;
   background-color: #171717;
 }
 
-.container strong {
+div strong {
+  display: block;
   font-size: 20px;
   line-height: 26px;
-}
-
-.container .upload-image {
-  display: block;
   margin: auto;
-  max-width: 200px; 
+  margin-bottom: 10px;
+  text-align: center;
 }
 
-.container .button-choose {
-  margin-top: 20px;
+.row strong {
+  display: block;
+  font-size: 20px;
+  line-height: 26px;
+  margin: auto;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.button-choose {
+  width: 350px;
+  margin: auto;
+  margin-bottom: 40px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.intro p {
+  font-weight: 300;
+  margin: 5px;
+}
+
+.body {
+  background-color: #171717;
+  background-image: url('../bnr.png');
+  background-position: top;
+  background-repeat: no-repeat;
+  background-size: 230%;
+  height: 100%;
+}
+
+@media screen and (max-width: 750px) {
+  .row {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+}
+
+.footer {
+  height:100px;
+  width: auto;
+}
+
+.footer a {
+  display: block;
+  text-align: right;
+  margin-right: 20px;
+  text-decoration: none;
+  color: var(--ion-color-danger);
 }

@@ -2,6 +2,10 @@
 http://ionicframework.com/docs/theming/ */
 
 /** Ionic CSS Variables **/
+* {
+  font-family: 'Hando', sans-serif !important;
+}
+
 :root {
   /** primary **/
   --ion-color-primary: #3880ff;

@@ -1,21 +1,13 @@
-# BLOCKS Verification Module
+# BLOCKS Helper Site
 
-This proof of concept application creates a unique hash for uploaded files. This hash is stored in local storage and immutably on BLOCKS. The hashes can be compared to determine authenticity or modifications to a file.
-
-# Use Cases for BLOCKS Verification Tools
-
-- Data security and verification tools
-- Immutable data storage
+This app helps users quickly add BLOCKS to Metamask. It also helps with adding the xDAI network, and BLOCKS on xDAI to Metamask. 
 
 ## Project Notes:
-- Project is set up for ETH mainnet
-- Metamask is used as the provider to sign transactions
-- Infura is used to connect to ETH for fetching/parsing data 
-(manually change the Infura url for Rinkeby testing from "mainnet.infura.io" to "rinkeby.infura.io"
+- The project relies on Metamask methods and events.
 
 ## Live Demo
 
-[BLOCKS Verification Web App](https://blocks-verification.web.app/home)
+[BLOCKS Helper Web App](https://blocks-helper.web.app/home)
 
 ## Running Locally
 The app is built with ReactJs and Ionic Framework
@@ -35,7 +27,7 @@ ionic serve
 
 ## Have Fun
 
-Have fun exploring and building verification tools with BLOCKS.
+Have fun exploring and building with BLOCKS!
 
 
 ## License

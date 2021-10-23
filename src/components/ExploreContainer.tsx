@@ -1,11 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IonButton } from '@ionic/react';
+import { IonButton, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
 import './ExploreContainer.css';
-import {ethers} from "ethers";
-import BigNumber from "bignumber.js";
-import * as md5 from "js-md5";
-import * as web3Utils from "web3-utils";
-import blocksData from "../blocksDetails";
 
 declare const window: any;
 
@@ -13,63 +8,160 @@ interface ContainerProps { }
 
 const ExploreContainer: React.FC<ContainerProps> = () => {
 
-  const [file, setFile] = useState("");
-  const [viewHash, setHash] = useState("");
-  const [viewFile, setViewFile] = useState("");
-  
-  const onChange = async (e: any) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setViewFile(URL.createObjectURL(e.target.files[0]))
-      setFile(e.target.files[0])
+  const [address, setAddress] = useState("");
+  const [network, setNetwork] = useState("");
+
+  const addBlocksToMetamask = async () => {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x1' }], // chainId must be in hexadecimal numbers
+    }).then((res:any) =>{
+      window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: '0x8a6d4c8735371ebaf8874fbd518b56edd66024eb',
+            symbol: 'BLOCKS',
+            decimals: 18,
+            image: 'https://ipfs.io/ipfs/QmRTDA6Z8ggARb1jAC4F6T3oa2hwAGi59Myc7oe8xd94Gk?filename=Blocks%20Etherscan%20Logo.png',
+          },
+        },
+      })
+      .then((success:any) => {
+        if (success) {
+          console.log('BLOCKS successfully added to wallet!')
+        } else {
+          throw new Error('Something went wrong.')
+        }
+      })
+      .catch(console.error)
+    });
+  }
+
+  const addBlocksToMetamaskXdai = async () => {    
+    try {
+      // check if the chain to connect to is installed
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x64' }], // chainId must be in hexadecimal numbers
+      }).then((res:any) =>{
+        window.ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: {
+              address: '0x1a4ea432e58bff38873af87bf68c525eb402aa1d',
+              symbol: 'BLOCKS',
+              decimals: 18,
+              image: "https://ipfs.io/ipfs/QmRTDA6Z8ggARb1jAC4F6T3oa2hwAGi59Myc7oe8xd94Gk?filename=blocks-logo.png"
+            },
+          },
+        })
+        .then((success:any) => {
+          if (success) {
+            console.log('BLOCKS successfully added to wallet!')
+          } else {
+            throw new Error('Something went wrong.')
+          }
+        })
+        .catch(console.error)
+      })
+    } catch (error:any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      // if it is not, then install it into the user MetaMask
+      if (error.code === 4902) {
+        try {
+          const change = await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: "0x64",
+              chainName: "xDAI Chain",
+              rpcUrls: [
+                  "https://rpc.xdaichain.com"
+              ],
+              iconUrls: [
+                  "https://gblobscdn.gitbook.com/spaces%2F-Lpi9AHj62wscNlQjI-l%2Favatar.png"
+              ],
+              nativeCurrency: {
+                  "name": "xDAI",
+                  "symbol": "xDAI",
+                  "decimals": 18
+              },
+              blockExplorerUrls: [
+                  "https://blockscout.com/xdai/mainnet/"
+              ]
+            }],
+          });
+          if(change){
+            window.ethereum.request({
+              method: 'wallet_watchAsset',
+              params: {
+                type: 'ERC20',
+                options: {
+                  address: '0x1a4ea432e58bff38873af87bf68c525eb402aa1d',
+                  symbol: 'BLOCKS',
+                  decimals: 18,
+                  image: "https://ipfs.io/ipfs/QmRTDA6Z8ggARb1jAC4F6T3oa2hwAGi59Myc7oe8xd94Gk?filename=blocks-logo.png",
+                },
+              },
+            })
+            .then((success:any) => {
+              if (success) {
+                console.log('BLOCKS successfully added to wallet!')
+              } else {
+                throw new Error('Something went wrong.')
+              }
+            })
+            .catch(console.error)
+          }
+        } catch (addError) {
+          console.error(addError);
+        }
+      }
+      console.error(error);
     }
   }
 
-  const fileInput = useRef<any>(null)
-
-  const uploadToBlocks = async (data: any) =>{
-    
-    const formData: any = new FormData();
-    formData.append('file', data);
-    console.log(formData);
-    const hash = await md5(new Uint8Array([formData]));
-    console.log(hash);
-    localStorage.setItem('hash', hash);
-    setHash(hash);
-    //Make a hash of our file and send to BLOCKS
-    blocksDataTransaction(hash);
-  }
-
-  const blocksDataTransaction = (fileData: any) => {
-
-      //Connect to Ethereum through the Metamask Provider
-      let provider: any;
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-
-      //Connect to the BLOCKS Smart Contract via the contract address, abi and provider
-      const contract = new ethers.Contract(blocksData.blocksAddress, blocksData.blocksAbi, provider);
-      let contractSigner = contract.connect(signer);
-
-      //Define the data you want to insert on-chain and convert to hex
-      let dataConverted = web3Utils.toHex(fileData);
-
-      //You can send any amount of BLOCKS tokens with the transaction. BigNumber helps JavaScript deal with large numbers involving BLOCKS' 18 decimals. In this case we are sending 2 BLOCKS.
-      // let amount = new BigNumber(2000000000000000000);
-      // console.log(amount.toFixed())
-
-      //Now you can call the "send" function by entering a receiving address, amount and the converted data.
-      let receivingAddress = "0xf0e3ea754D038b979CD0124e2f1A4Bf44f32746a"
-      contractSigner.send(receivingAddress, 0, dataConverted).then((tx: any)=>{
-        if(tx){
-          //View the transaction response and get the transaction hash
-          console.log(tx)
-          alert(tx.hash);
+  const addxDaiToMetamask = async() => {
+      try {
+        // check if the chain to connect to is installed
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x64' }], // chainId must be in hexadecimal numbers
+        });
+      } catch (error:any) {
+        // This error code indicates that the chain has not been added to MetaMask
+        // if it is not, then install it into the user MetaMask
+        if (error.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: "0x64",
+                chainName: "xDAI Chain",
+                rpcUrls: [
+                    "https://rpc.xdaichain.com"
+                ],
+                iconUrls: [
+                    "https://gblobscdn.gitbook.com/spaces%2F-Lpi9AHj62wscNlQjI-l%2Favatar.png"
+                ],
+                nativeCurrency: {
+                    "name": "xDAI",
+                    "symbol": "xDAI",
+                    "decimals": 18
+                },
+                blockExplorerUrls: [
+                    "https://blockscout.com/xdai/mainnet/"
+                ]
+            }],
+            });
+          } catch (addError) {
+            console.error(addError);
+          }
         }
-      }).catch((e: any) => {
-        alert(e.message);
-        setFile("");
-        setViewFile("")
-      });
+        console.error(error);
+      }
   }
 
   useEffect(() => {
@@ -77,6 +169,7 @@ const ExploreContainer: React.FC<ContainerProps> = () => {
       window.ethereum.request({ method: 'eth_requestAccounts' })
       .then((res:any) => {
         console.log(res[0]);
+        setAddress(res[0])
       })
       .catch((error: any) => {
         if (error.code === 4001) {
@@ -86,33 +179,70 @@ const ExploreContainer: React.FC<ContainerProps> = () => {
           console.error(error);
         }
       });
+      window.ethereum.on('connect', (connectInfo: any) => {
+        console.log(connectInfo.chainId)
+        switch(connectInfo.chainId){
+          case '0x1':
+            setNetwork("Ethereum");
+            break;
+          case '0x64':
+            setNetwork("xDAI");
+        }
+      });
     }
-    if(file){
-      uploadToBlocks(file);
-    }
-  }, [file]);
+    window.ethereum.on('chainChanged', (chainId: string) => {
+      console.log(chainId)
+      switch(chainId){
+        case '0x1':
+          setNetwork("Ethereum");
+          break;
+        case '0x64':
+          setNetwork("xDAI");
+      }
+      window.location.reload();
+    });
+    window.ethereum.on('accountsChanged', (accounts: Array<string>) => {
+      console.log(accounts)
+      setAddress(accounts[0])
+    });
+  }, []);
 
   return (
-      <div className="container">
-        <strong>Asset Verification Module</strong>
-        <input
-          type='file'
-          name='image'
-          ref={fileInput}
-          onChange={onChange}
-          style={{ display: 'none' }}
-        />
+    <div className="body">  
+      <div className="intro">
+        <strong>Quickly add BLOCKS to Metamask.</strong>
+        {address &&
+         <>
+          <p>Connected: {address}</p>
+          {network &&
+            <p>You are on {network}</p>
+          }
+         </> 
+        }
+      </div>
+        <div className="col">
+        <strong>BLOCKS on Ethereum</strong>
         <IonButton
           className="button-choose"
           color="danger"
-          onClick={() => fileInput.current?.click()}>Choose File</IonButton>
-        {file && viewFile &&
-          <>
-            <p>Stored Hash: {viewHash}</p>
-            <img className="upload-image" src={viewFile} />
-          </>
-        }
-      </div>  
+          onClick={addBlocksToMetamask}>Add (ETH) BLOCKS to Metamask</IonButton>
+        </div>
+        <div className="col">
+        <strong>BLOCKS on xDAI</strong>
+          <IonButton
+          className="button-choose"
+          color="danger"
+          fill="outline"
+          onClick={addxDaiToMetamask}>Switch to xDai Network</IonButton>
+          <IonButton
+          className="button-choose"
+          color="danger"
+          onClick={addBlocksToMetamaskXdai}>Add (xDAI) BLOCKS to Metamask</IonButton>
+        </div>  
+      <div className="footer">
+        <a href="https://blocks.io">Blocks.io</a>
+      </div>
+    </div>  
   );
 };
 
